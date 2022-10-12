@@ -9,7 +9,7 @@ const db = require("./db");
 const compRoutes = require("./routes/companies");
 const invRoutes = require("./routes/invoices");
 
-// middleware used tp parse incoming requests/ body as json
+// middleware used to parse incoming requests/ body as json
 app.use(express.json());
 
 
