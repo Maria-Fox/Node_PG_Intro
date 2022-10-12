@@ -8,7 +8,6 @@ const ExpressError = require("./expressError")
 const db = require("./db");
 const compRoutes = require("./routes/companies");
 const invRoutes = require("./routes/invoices");
-const router = require("./routes/companies");
 
 // middleware used tp parse incoming requests/ body as json
 app.use(express.json());
