@@ -62,7 +62,7 @@ router.post("/", async function(req, res, next) {
 
     let result = await db.query(`INSERT INTO companies (code, name, description) VALUES($1, $2, $3) RETURNING code, name, description`, [code, name, description] );
 
-    return res.json({"company": result.rows[0]});
+    return res.status(201).json({"company": result.rows[0]});
 
   } catch (e) {
     return new ExpressError("Company not found", 404);

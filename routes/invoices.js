@@ -81,7 +81,7 @@ router.post("/", async function(req, res, next) {
 
     console.log(result)
 
-    return res.json({"invoice": result.rows[0]})
+    return res.status(201).json({"invoice": result.rows[0]})
 
   } catch (e) {
     return new ExpressError("Error, please ensure you have the comp_code and amount entered to add a new invoice.", 404)
