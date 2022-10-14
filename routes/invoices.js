@@ -10,8 +10,8 @@ router.get("/", async function(req, res, next) {
   try {
     let results = await  db.query(`SELECT * FROM invoices`);
     return res.json({"invoices": results.rows})
-  } catch (e){
-    return next(e)
+  } catch (err){
+    return next(err)
   }
 })
 
@@ -35,8 +35,6 @@ router.get("/:id", async function (req, res, next){
       WHERE id = $1`,
     [id]);
 
-    console.log(result)
-
     // we're joining to ensure the invoice corresponds to the company. displays both invoice and co. info.
 
     if (result.rows.length === 0) {
@@ -44,7 +42,6 @@ router.get("/:id", async function (req, res, next){
     }
 
     const invoiceCompanyInfo = result.rows[0]
-    console.log("got this far")
     console.log(invoiceCompanyInfo)
 
     const invoice = {
@@ -62,7 +59,7 @@ router.get("/:id", async function (req, res, next){
 
     return res.json({"invoice": invoice});
 
-  } catch (e){
+  } catch (err){
     return new ExpressError(`Invalid invoice id.`, 404)
   }
 })
@@ -73,35 +70,38 @@ router.post("/", async function(req, res, next) {
     console.log(comp_code, amt)
 
     // immeditely sends error if a missing body item is found
-    if (!comp_code || !amt ){
+    if (!comp_code, !amt ){
       return new ExpressError("Please include the invoice company code and the amount for the invoice.")
     }
 
-    let result = await db.query(`INSERT INTO invoices (comp_code, amt) VALUES($1, $2 ) RETURNING id, comp_code, amt, paid, add_date, paid_date`, [comp_code, amt] )
-
-    console.log(result)
+    let result = await db.query(`
+      INSERT INTO invoices (comp_code, amt) 
+      VALUES($1, $2 ) 
+      RETURNING id, comp_code, amt, paid, add_date, paid_date`, [comp_code, amt] );
 
     return res.status(201).json({"invoice": result.rows[0]})
 
-  } catch (e) {
+  } catch (err) {
     return new ExpressError("Error, please ensure you have the comp_code and amount entered to add a new invoice.", 404)
   }
 })
 
 
+// updated after tests in further study- allow paying of invoices
 
-router.patch("/:id", async function(req, res, next) {
+
+router.put("/:id", async function(req, res, next) {
   try {
     let id = Number(req.params.id);
+    let { amt, paid } = req.body;
     let paidDate = null;
-
-    let { amt, paid} = req.body;
 
     // check if ID exists.
 
-    let invoice = await db.query(`SELECT paid from INVOICES WHERE id = $1`, [id]);
-
-    console.log(invoice.rows[0])
+    let invoice = await db.query(`
+      SELECT paid 
+      FROM invoices 
+      WHERE id = $1`, [id]);
 
     if (invoice.rows.length === 0){
       return new ExpressError ("Invalid invoice ID", 404);
@@ -121,16 +121,16 @@ router.patch("/:id", async function(req, res, next) {
     }
 
     const result = await db.query(
-      `UPDATE invoices
+        `UPDATE invoices
         SET amt = $1, paid = $2, paid_date = $3
         WHERE id = $4
         RETURNING id, comp_code, amt, paid, add_date, paid_date`,
-    [amt, paid, paidDate, id]);
+        [amt, paid, paidDate, id]);
 
     return res.json({"invoice": result.rows[0]});
 
-  } catch (e) {
-    return next(e)
+  } catch (err) {
+    return next(err)
   }
 })
 
@@ -139,11 +139,13 @@ router.delete("/:id", async function(req, res, next) {
   try {
     let id = Number(req.params.id)
 
-    let result = await db.query(`DELETE FROM invoices WHERE id = $1`, [id])
+    let result = await db.query(`
+    DELETE FROM invoices 
+    WHERE id = $1 RETURNING id`, [id])
 
     return res.json({"status": "deleted"})
 
-  } catch (e) {
+  } catch (err) {
     return new ExpressError("Code does not exist. Please enter a valid company code.", 404)
   }
 })
